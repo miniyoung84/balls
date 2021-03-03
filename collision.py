@@ -5,15 +5,15 @@ import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
-
+#WIKI: https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#
 max_dist = 9 #max distance the balls can be from each other
 min_dist = 3 #min disrance the balls can be from each other
 k_vel = 3 #constant that varies the velocity
 rolling_mass = 5 # mass of the rolling ball
 static_mass = 10 # mass of the initially static ball
-restitution = 0.97 #bouncyness of contact. Keep it a bit less than 1, preferably closer to 0.
-gravity = -10
-
+restitution = 0.5 #bouncyness of contact. Keep it a bit less than 1, preferably closer to 0.
+gravity = -9.81
+Iter = 500 #number of iterations
 
 #rollingFriction : torsional friction orthogonal to contact normal (keep this value very close to zero,
 #otherwise the simulation can become very unrealistic.)
@@ -62,7 +62,6 @@ p.changeDynamics(sphere2, -1, rollingFriction = rollingFriction)
 #print("sphere 1 data: ", p.getJointInfo(sphere1))
 
 #set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-Iter = 1000
 vel = np.zeros(Iter)
 vel2 = np.zeros(Iter)
 for i in range (Iter):
@@ -71,16 +70,12 @@ for i in range (Iter):
     time.sleep(1./480.)
     v = p.getBaseVelocity(sphere1)
     v2 = p.getBaseVelocity(sphere2)
-#    print("v = ", v)#
-    #print("v[0][0]" ,  v[0][0])
-    #print("v[0][1]" ,  v[0][1])
     v_mag = np.sqrt((v[0][0]*v[0][0]) + (v[0][1]*v[0][1]))
     vel[i] = v_mag
 
     v_mag2 = np.sqrt((v2[0][0]*v2[0][0]) + (v2[0][1]*v2[0][1]))
     vel2[i] = v_mag2
 
-    #print("sphere 1 velocity ", v_mag)
 plt.plot(vel)
 plt.plot(vel2)
 plt.show()
