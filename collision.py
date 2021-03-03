@@ -19,10 +19,14 @@ gravity = -9.8
 #otherwise the simulation can become very unrealistic.)
 rollingFriction = 0.0
 
-physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version
+random.seed()
+
+physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,gravity)
 planeId = p.loadURDF("plane.urdf")
+perlin_id = p.loadTexture("perlin.png")
+white_id = p.loadTexture("white.png")
 
 #Get random distance from the center ball
 while(True):
@@ -57,12 +61,16 @@ p.changeDynamics(sphere2, -1, restitution = restitution)
 p.changeDynamics(sphere1, -1, rollingFriction = rollingFriction)
 p.changeDynamics(sphere2, -1, rollingFriction = rollingFriction)
 
+p.changeVisualShape(planeId, -1, rgbaColor=[random.random(), random.random(), random.random(), 1], textureUniqueId=perlin_id, physicsClientId=physicsClient)
+p.changeVisualShape(sphere1, -1, rgbaColor=[random.random(), random.random(), random.random(), 1], textureUniqueId=white_id, physicsClientId=physicsClient)
+p.changeVisualShape(sphere2, -1, rgbaColor=[random.random(), random.random(), random.random(), 1], textureUniqueId=white_id, physicsClientId=physicsClient)
+
 # randomize camera parameters
 max_camera_dist = 50
 min_camera_dist = 3
 camera_radius = random.randint(min_camera_dist, max_camera_dist)
-camera_phi = math.radians(random.randint(0, 90))
-camera_theta = math.radians(random.randint(0, 360))
+camera_phi = math.radians(random.randint(0, 360))
+camera_theta = math.radians(random.randint(0, 85))
 
 camera_x = camera_radius * math.sin(camera_theta) * math.cos(camera_phi)
 camera_y = camera_radius * math.sin(camera_theta) * math.sin(camera_phi)
@@ -82,7 +90,7 @@ for i in range (Iter):
     p.stepSimulation()
     
     # get an image
-    [wid, hei, rgbPixels, dpth, segmask] = p.getCameraImage(width=250, height=250, viewMatrix=view_matrix, projectionMatrix=proj_matrix)
+    [wid, hei, rgbPixels, dpth, segmask] = p.getCameraImage(width=250, height=250, viewMatrix=view_matrix, projectionMatrix=proj_matrix, shadow=1, physicsClientId=physicsClient)
 
     img = np.asarray(rgbPixels)
     greyscale = np.zeros([250, 250], dtype=np.uint8)
