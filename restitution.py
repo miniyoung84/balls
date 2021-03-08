@@ -10,8 +10,8 @@ max_dist = 15 #max height
 min_dist = 5 #min height
 k_vel = 3 #constant that varies the velocity
 mass = 1 # mass of the ball
-restitution = 0.9 #bouncyness of contact. Keep it a bit less than 1, preferably closer to 0.
-gravity = -9.8
+restitution = 0.5 #bouncyness of contact. Keep it a bit less than 1, preferably closer to 0.
+gravity = -9.81
 
 
 #rollingFriction : torsional friction orthogonal to contact normal (keep this value very close to zero,
@@ -34,10 +34,11 @@ h = random.randint(min_dist, max_dist)
 
 startOrientation = p.getQuaternionFromEuler([0,0,0])
 sphere1 = p.loadURDF("sphere2.urdf",[0, 0,4], startOrientation)
-p.resetBaseVelocity(sphere1, [0, 0 , -1])
+p.resetBaseVelocity(sphere1, [0, 0 , 0])
 p.changeDynamics(sphere1, -1, mass = mass)
 p.changeDynamics(sphere1, -1, restitution = restitution)
 p.changeDynamics(sphere1, -1, rollingFriction = rollingFriction)
+p.changeDynamics(planeId, -1, restitution = 0.99)
 
 
 # ****************p.changeVisualShape(planeId, -1, rgbaColor=[random.random(), random.random(), random.random(), 1], textureUniqueId=perlin_id, physicsClientId=physicsClient)
@@ -83,7 +84,7 @@ for i in range (Iter):
     # ****************frames[i,:] = greyscale.flatten()
     # ****************print(i)    
 
-    time.sleep(1./240.)
+    time.sleep(1./100000.)
 
     v = p.getBaseVelocity(sphere1)
 
