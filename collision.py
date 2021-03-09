@@ -107,5 +107,6 @@ for sample_index in range(num_samples):
 
     np.save(f'{start_time}{os.sep}sample_{sample_index}.npy', frames)
     np.save(f'{start_time}{os.sep}sample_{sample_index}_restitution.npy', restitution)
+    p.removeBody(sphere)
 
 p.disconnect()
