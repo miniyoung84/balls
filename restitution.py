@@ -33,7 +33,28 @@ h = random.randint(min_dist, max_dist)
 
 
 startOrientation = p.getQuaternionFromEuler([0,0,0])
-sphere1 = p.loadURDF("sphere2.urdf",[0, 0,4], startOrientation)
+#sphere1 = p.loadURDF("sphere2.urdf",[0, 0,4], startOrientation)
+
+# verts=[[-0.246350, -0.246483, -0.000624],
+# 	[ -0.151407, -0.176325, 0.172867],
+# 	[ -0.246350, 0.249205, -0.000624],
+# 	[ -0.151407, 0.129477, 0.172867],
+# 	[ 0.249338, -0.246483, -0.000624],
+# 	[ 0.154395, -0.176325, 0.172867],
+# 	[ 0.249338, 0.249205, -0.000624],
+# 	[ 0.154395, 0.129477, 0.172867]]
+#p.createCollisionShape(p.GEOM_PLANE)
+sphereRadius =  0.5
+colSphereId = p.createCollisionShape(p.GEOM_CAPSULE, radius=sphereRadius,height=1)
+
+
+ellipse= p.createCollisionShape(p.GEOM_CAPSULE, radius = 1, height = 2, length = 1 )
+print("ellipse", ellipse)
+basePosition = [0, 0,4]
+baseOrientation = [0, 0, 0, -1]
+sphere1 = p.createMultiBody(mass, colSphereId, -1, basePosition,
+                                      baseOrientation)
+#p.createMultiBody(1, colSphereId, [0, 0,4], startOrientation)
 p.resetBaseVelocity(sphere1, [0, 0 , 0])
 p.changeDynamics(sphere1, -1, mass = mass)
 p.changeDynamics(sphere1, -1, restitution = restitution)
@@ -97,5 +118,7 @@ for i in range (Iter):
 # ****************np.save(f'runtimebaby.npy', frames)
 
 plt.plot(vel)
+plt.xlabel('Time Step')
+plt.ylabel('Velocity Mag') 
 plt.show()
 p.disconnect()
