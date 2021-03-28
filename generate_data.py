@@ -11,25 +11,25 @@ import matplotlib.pyplot as plt
 
 gravity = -9.81
 num_frames = 30 #number of frames per simulation
-num_samples = 500 # number of simulations we want to run
+num_samples = 100000 # number of simulations we want to run
 frame_dimensions = 170
 
 random.seed()
 
-physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
+physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version
 p.setTimeStep(1 / 30, physicsClientId=physicsClient)
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,gravity)
 planeId = p.loadURDF("plane.urdf")
-perlin_id = p.loadTexture("perlin.png")
 white_id = p.loadTexture("white.png")
 
 texture_paths = glob.glob(os.path.join('dtd', '**', '*.jpg'), recursive=True)
 
-
 start_time = time.strftime("%d_%b_%H-%M-%S", time.localtime())
 os.mkdir(start_time)
+print(f'                                                                ')
 for sample_index in range(num_samples):
+    print(f'\rSample {sample_index} of {num_samples} ({sample_index/num_samples: f}%)   ')    
     random_texture_path = texture_paths[random.randint(0, len(texture_paths) - 1)]
     plane_texture = p.loadTexture(random_texture_path)
 
@@ -42,7 +42,7 @@ for sample_index in range(num_samples):
     basePosition = [0, 0, drop_height]
     baseVelocity = np.random.rand(3) * 2.9 + 0.1
     baseAngular = np.random.rand(3) * 10
-    ellipse= p.createCollisionShape(p.GEOM_CAPSULE, radius = 0.2, height = 0.5)
+    ellipse= p.createCollisionShape(p.GEOM_MESH, fileName='sphere.obj', meshScale=[random.random() * 0.2 + 0.3, random.random() * 0.3 + 0.2, 0.5])
     physics_body = p.createMultiBody(mass, ellipse, -1, basePosition, baseOrientation)
     p.resetBaseVelocity(physics_body, baseVelocity, baseVelocity)
     p.changeDynamics(physics_body, -1, mass = mass)
@@ -71,9 +71,13 @@ for sample_index in range(num_samples):
     light_y = math.sin(camera_theta) * math.sin(light_phi)
     light_z = math.cos(camera_theta)
 
+    diffuse = random.random() * 0.7 + 0.3
+    ambient = random.random() * 0.2 + 0.2
+    specular = random.random() * 0.7 + 0.3
+
     # Find where the object will hit the ground
     roots = np.roots([0.5 * gravity, baseVelocity[2], -drop_height])
-    time_to_hit = np.max(roots)
+    time_to_hit = np.real(np.max(roots))
 
     x_pos = baseVelocity[0] * time_to_hit
     y_pos = baseVelocity[1] * time_to_hit
@@ -83,9 +87,9 @@ for sample_index in range(num_samples):
     camera_y = camera_radius * math.sin(camera_theta) * math.sin(camera_phi) + y_pos
     camera_z = camera_radius * math.cos(camera_theta)
     final_pos_relative = np.asarray([x_pos, y_pos, 0]) - np.asarray([camera_x, camera_y, camera_z])
-    lookat = final_pos_relative + np.random.rand(3) / (np.sum(np.square(final_pos_relative)))
+    lookat = final_pos_relative + np.random.rand(3) / np.sqrt(np.sum(np.square(final_pos_relative))) * camera_fov / 60
     view_matrix = p.computeViewMatrix(cameraEyePosition=[camera_x, camera_y, camera_z], cameraTargetPosition=lookat, cameraUpVector=[0, 0, drop_height / 2])
-    proj_matrix = p.computeProjectionMatrixFOV(fov=camera_fov, aspect=1.0, nearVal=0.5*min_camera_dist, farVal=2*max_camera_dist)
+    proj_matrix = p.computeProjectionMatrixFOV(fov=camera_fov, aspect=1.0, nearVal=0.01, farVal=2*max_camera_dist)
 
     #print("sphere 1 data: ", p.getJointInfo(sphere))
 
@@ -102,9 +106,9 @@ for sample_index in range(num_samples):
         p.stepSimulation(physicsClientId=physicsClient)
         
         # get an image
-        [wid, hei, rgbPixels, dpth, segmask] = p.getCameraImage(width=frame_dimensions, height=frame_dimensions, viewMatrix=view_matrix, projectionMatrix=proj_matrix, lightDirection=[-light_x, -light_y, -light_z], lightDistance=light_radius, lightColor=light_color, shadow=1, physicsClientId=physicsClient)
+        [wid, hei, rgbPixels, dpth, segmask] = p.getCameraImage(width=frame_dimensions, height=frame_dimensions, viewMatrix=view_matrix, projectionMatrix=proj_matrix, lightDirection=[-light_x, -light_y, -light_z], lightDistance=light_radius, lightColor=light_color, shadow=1, renderer= p.ER_TINY_RENDERER, lightAmbientCoeff=ambient, lightDiffuseCoeff=diffuse, lightSpecularCoeff=specular, physicsClientId=physicsClient)
 
-        img = np.asarray(rgbPixels)
+        img = np.asarray(rgbPixels, dtype=np.uint8)
 
         # plt.imshow(img)
         # plt.show()
@@ -112,8 +116,6 @@ for sample_index in range(num_samples):
         frames[i,:,0] = img[:,:,0].flatten()
         frames[i,:,1] = img[:,:,1].flatten()
         frames[i,:,2] = img[:,:,2].flatten()
-
-        print(f'Sample {sample_index} frame {i}/{num_frames}')    
 
         v = p.getBaseVelocity(physics_body)
         v_mag = np.sqrt((v[0][0]*v[0][0]) + (v[0][1]*v[0][1]) + (v[0][2]*v[0][2]))
@@ -126,6 +128,7 @@ for sample_index in range(num_samples):
     count = 0
     while(z_vel < 0 and count < 1000):
       p.stepSimulation(physicsClientId=physicsClient)
+      z_vel = p.getBaseVelocity(physics_body)[0][2]
       count += 1
     [final_position, final_orientation] = p.getBasePositionAndOrientation(physics_body)
     final_velocity = p.getBaseVelocity(physics_body)[0]
