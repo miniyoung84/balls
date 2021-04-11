@@ -1,5 +1,7 @@
-import torch, os
+import torch, os, glob
 from torch import nn
+import scipy.io
+import numpy as np
 
 # A print module for debugging
 class Print(nn.Module):
@@ -28,8 +30,8 @@ class EFBNet(nn.Module):
             nn.MaxPool2d(2, 2),
             Print(),
             nn.Flatten(),
-            nn.Linear(h * w * 256 * num_frames_fused, 4096), # ngl I have no idea if these dimensions will work with our videos, print statement above should let us know what to put here
-            nn.Linear(4096, 3) # ig we have it output the 3 x,y,z coordinates of where the ball will land
+            nn.Linear(256 * num_frames_fused, 4096), # ngl I have no idea if these dimensions will work with our videos, print statement above should let us know what to put here
+            nn.Linear(4096, 6) # ig we have it output the x,y,z coordinates of where the ball will land and the x,y,z velocity
         )
 
     def forward(self, x):
@@ -45,6 +47,32 @@ class EFBNet(nn.Module):
         return pred
 
 
+def load_data(num_frames_to_fuse):
+    bounce_frame = 14 # clips already generated such that bounce occurs on frame 14 or 15
+    start_frame = int(bounce_frame - 0.5 * num_frames_to_fuse)
+    end_frame = int(bounce_frame + 0.5 * num_frames_to_fuse)
+
+    # Find paths to each mat
+    sample_paths = glob.glob(os.path.join('simulated_data', '**', '*.npy'), recursive=True)
+    sample_paths = sample_paths[:1000]
+
+    dataset = np.zeros([len(sample_paths), 3, num_frames_to_fuse, 170, 170], dtype=np.uint8)
+    labels = np.zeros([len(sample_paths), 6])
+    for i in range(len(sample_paths)):
+        sample = scipy.io.loadmat(sample_paths[i])
+        trimmed_frame = sample['frames'][start_frame:end_frame, :,:]
+        frames = np.reshape(trimmed_frame, [num_frames_to_fuse, 170, 170, 3])
+        pos_label = sample['position'][0]
+        vel_label = sample['velocity'][0]
+        labels[i,:3] = pos_label[:]
+        labels[i,3:6] = vel_label[:]
+
+        # Rearrange axes of frames to match dataset
+        dataset[i,:,:,:,:] = np.transpose(frames, axes=[3, 0, 1, 2])
+    
+    return torch.from_numpy(dataset), torch.from_numpy(labels)
+    
+
 if __name__ == '__main__':
     # Use GPU if available
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -55,8 +83,7 @@ if __name__ == '__main__':
 
     # Gotta read that fuckin data in bro
     # also maybe add a bit of noise to the images??
-    x = None
-    y = None
+    full_data, labels = load_data(num_frames)
 
     # Instantiate model
     model = EFBNet(num_frames).to(device) # Create the network and send it to the GPU
@@ -64,15 +91,22 @@ if __name__ == '__main__':
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
 
     for epoch in range(500):
-        # Predict
-        y_pred = model(x)
+        # Minibatch
+        permutation = torch.randperm(full_data.size()[0])
 
-        # Find loss
-        loss = L2_dist(y_pred, y)
-        print(f'Epoch {epoch}. Loss = {loss.item()}')
+        for i in range(0, full_data.size()[0], batch_size):
+            indices = permutation[i:i+batch_size]
+            batch_x, batch_y = full_data[indices], labels[indices]
 
-        # Backpropagate thru some syntactic magic
-        optimizer.zero_grad() # Zero optimizer's gradients
-        loss.backward() # Backpropagate loss
-        optimizer.step()
+            # Predict
+            y_pred = model(batch_x)
+
+            # Find loss
+            loss = L2_dist(y_pred, batch_y)
+            print(f'Epoch {epoch}. Loss = {loss.item()}')
+
+            # Backpropagate thru some syntactic magic
+            optimizer.zero_grad() # Zero optimizer's gradients
+            loss.backward() # Backpropagate loss
+            optimizer.step()
 
