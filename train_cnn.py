@@ -1,5 +1,6 @@
 import torch, os, glob
-from torch import nn
+from torch import nn as nn
+import torch.nn.functional as nnf
 import scipy.io
 import numpy as np
 
@@ -13,7 +14,7 @@ class Print(nn.Module):
 class EFBNet(nn.Module):
     def __init__(self, num_frames_fused):
         super(EFBNet, self).__init__()
-        
+
         # Architecture copied from https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42455.pdf
         #   (which, in turn, adapts architecture from ImageNet)
         # Has some baked-in assumtions on frame dimensions :/
@@ -44,6 +45,7 @@ class EFBNet(nn.Module):
         """
 
         pred = self.sequence(x)
+        
         return pred
 
 
@@ -69,9 +71,9 @@ def load_data(num_frames_to_fuse):
 
         # Rearrange axes of frames to match dataset
         dataset[i,:,:,:,:] = np.transpose(frames, axes=[3, 0, 1, 2])
-    
+
     return torch.from_numpy(dataset), torch.from_numpy(labels)
-    
+
 
 if __name__ == '__main__':
     # Use GPU if available
@@ -109,4 +111,3 @@ if __name__ == '__main__':
             optimizer.zero_grad() # Zero optimizer's gradients
             loss.backward() # Backpropagate loss
             optimizer.step()
-
