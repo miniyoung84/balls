@@ -4,7 +4,6 @@ import scipy.io
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 import torchvision
-import json
 
 # A print module for debugging
 class Print(nn.Module):
@@ -167,9 +166,6 @@ if __name__ == '__main__':
             loss.backward() # Backpropagate loss
             optimizer.step()
         
-        json = json.dumps(model.state_dict)
-        f = open(f'last_state_dict.json',"w")
-        f.write(json)
-        f.close()
+        torch.save(model, 'most_recent_model.pt')
 
         print(f'Epoch {epoch}. Loss = {net_loss}')
