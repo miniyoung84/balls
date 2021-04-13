@@ -151,8 +151,8 @@ if __name__ == '__main__':
         print(f'Epoch {epoch}')
         for i in range(len(dataset)):
             batch = next(iter(dataset))
-            batch_x = batch['tensor'].float()
-            batch_y = batch['label'].float()
+            batch_x = batch['tensor'].float().to(device)
+            batch_y = batch['label'].float().to(device)
 
             # Predict
             y_pred = model(batch_x)
