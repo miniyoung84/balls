@@ -30,7 +30,7 @@ class EFBNet(nn.Module):
             nn.MaxPool2d(2, 2),
             Print(),
             nn.Flatten(),
-            nn.Linear(256 * num_frames_fused, 4096), # ngl I have no idea if these dimensions will work with our videos, print statement above should let us know what to put here
+            nn.Linear(256 * 4 * num_frames_fused, 4096), # ngl I have no idea if these dimensions will work with our videos, print statement above should let us know what to put here
             nn.Linear(4096, 6) # ig we have it output the x,y,z coordinates of where the ball will land and the x,y,z velocity
         )
 
