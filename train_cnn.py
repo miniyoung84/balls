@@ -129,8 +129,8 @@ def load_data(num_frames_to_fuse):
     
 if __name__ == '__main__':
     # Use GPU if available
-    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    device = 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # device = 'cpu'
     print('Using {} device'.format(device))
 
     batch_size = 64
