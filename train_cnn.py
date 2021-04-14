@@ -127,6 +127,7 @@ def load_data(num_frames_to_fuse):
     return torch.from_numpy(dataset), torch.from_numpy(labels)
     
 if __name__ == '__main__':
+    model_save_path = 'most_recent_model.pt'
     # Use GPU if available
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # device = 'cpu'
@@ -141,7 +142,13 @@ if __name__ == '__main__':
     dataset = DataLoader(BounceDataset(sample_paths), batch_size=batch_size, shuffle=True, num_workers=0)
 
     # Instantiate model
-    model = EFBNet(num_frames).to(device) # Create the network and send it to the GPU
+    model = None
+    if os.path.exists(model_save_path):
+        model = torch.load(model_save_path)
+    else:
+        model = EFBNet(num_frames).to(device) # Create the network and send it to the GPU
+    
+    # Define loss, optimization technique
     L2_dist = nn.MSELoss(reduction='mean')
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
 
@@ -168,8 +175,8 @@ if __name__ == '__main__':
             optimizer.step()
             
             if (i + 1) % 100 == 0:
-                torch.save(model, 'most_recent_model.pt')
+                torch.save(model, model_save_path)
         
-        torch.save(model, 'most_recent_model.pt')
+        torch.save(model, model_save_path)
 
         print(f'Epoch {epoch}. Loss = {net_loss}')
