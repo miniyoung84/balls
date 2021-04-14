@@ -128,6 +128,8 @@ def load_data(num_frames_to_fuse):
     
 if __name__ == '__main__':
     model_save_path = 'most_recent_model.pt'
+    loss_save_path = 'epoch_loss.csv'
+
     # Use GPU if available
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # device = 'cpu'
@@ -177,6 +179,10 @@ if __name__ == '__main__':
             if (i + 1) % 100 == 0:
                 torch.save(model, model_save_path)
         
+        # Save things
         torch.save(model, model_save_path)
+        loss_file = open(loss_save_path, 'a')
+        loss_file.write(f'{net_loss}\n')
+        loss_file.close()
 
         print(f'Epoch {epoch}. Loss = {net_loss}')
