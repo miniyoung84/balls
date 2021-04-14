@@ -148,6 +148,7 @@ if __name__ == '__main__':
     for epoch in range(1000000):
         net_loss = 0
         print(f'Epoch {epoch}')
+        total = len(dataset)
         for i in range(len(dataset)):
             batch = next(iter(dataset))
             batch_x = batch['tensor'].float().to(device)
@@ -159,12 +160,15 @@ if __name__ == '__main__':
             # Find loss
             loss = L2_dist(y_pred, batch_y)
             net_loss += loss.item()
-            print(f'    Loss of batch {i} = {loss.item()}')
+            print(f'    Loss of batch {i}/{total} = {loss.item()}')
 
             # Backpropagate thru some syntactic magic
             optimizer.zero_grad() # Zero optimizer's gradients
             loss.backward() # Backpropagate loss
             optimizer.step()
+            
+            if (i + 1) % 100 == 0:
+                torch.save(model, 'most_recent_model.pt')
         
         torch.save(model, 'most_recent_model.pt')
 
