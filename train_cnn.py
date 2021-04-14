@@ -146,6 +146,7 @@ if __name__ == '__main__':
     # Instantiate model
     model = None
     if os.path.exists(model_save_path):
+        print("Resuming training from most recent model...")
         model = torch.load(model_save_path)
     else:
         model = EFBNet(num_frames).to(device) # Create the network and send it to the GPU
@@ -158,7 +159,7 @@ if __name__ == '__main__':
         net_loss = 0
         print(f'Epoch {epoch}')
         total = len(dataset)
-        for i in range(len(dataset)):
+        for i in range(1):
             batch = next(iter(dataset))
             batch_x = batch['tensor'].float().to(device)
             batch_y = batch['label'].float().to(device)
