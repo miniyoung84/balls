@@ -159,7 +159,7 @@ if __name__ == '__main__':
         net_loss = 0
         print(f'Epoch {epoch}')
         total = len(dataset)
-        for i in range(1):
+        for i in range(len(dataset)):
             batch = next(iter(dataset))
             batch_x = batch['tensor'].float().to(device)
             batch_y = batch['label'].float().to(device)
