@@ -7,6 +7,7 @@ import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
+import time
 #WIKI: https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#
 
 gravity = -9.81
@@ -16,8 +17,8 @@ frame_dimensions = 170
 
 random.seed()
 
-physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version
-p.setTimeStep(1 / 30, physicsClientId=physicsClient)
+physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
+p.setTimeStep(1 / 30 / 50, physicsClientId=physicsClient)
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,gravity)
 planeId = p.loadURDF("plane.urdf")
@@ -76,8 +77,8 @@ for sample_index in range(num_samples):
     specular = random.random() * 0.7 + 0.3
 
     # Find where the object will hit the ground
-    roots = np.roots([0.5 * gravity, baseVelocity[2], -drop_height])
-    time_to_hit = np.real(np.max(roots))
+    roots = np.roots([0.5 * gravity, baseVelocity[2], drop_height])
+    time_to_hit = np.max(np.real(roots))
 
     x_pos = baseVelocity[0] * time_to_hit
     y_pos = baseVelocity[1] * time_to_hit
@@ -100,10 +101,12 @@ for sample_index in range(num_samples):
 
     bounce_frame = int(time_to_hit * 30)
     for i in range(int(bounce_frame - num_frames / 2)):
+      for j in range(50):
         p.stepSimulation(physicsClientId=physicsClient)
 
     for i in range(num_frames):
-        p.stepSimulation(physicsClientId=physicsClient)
+        for j in range(50):
+          p.stepSimulation(physicsClientId=physicsClient)
         
         # get an image
         [wid, hei, rgbPixels, dpth, segmask] = p.getCameraImage(width=frame_dimensions, height=frame_dimensions, viewMatrix=view_matrix, projectionMatrix=proj_matrix, lightDirection=[-light_x, -light_y, -light_z], lightDistance=light_radius, lightColor=light_color, shadow=1, renderer= p.ER_TINY_RENDERER, lightAmbientCoeff=ambient, lightDiffuseCoeff=diffuse, lightSpecularCoeff=specular, physicsClientId=physicsClient)
@@ -125,19 +128,26 @@ for sample_index in range(num_samples):
 
     # Continue simulation and record where the thing lands
     z_vel = p.getBaseVelocity(physics_body)[0][2]
+    while(z_vel > 0):
+      p.stepSimulation(physicsClientId=physicsClient)
+      z_vel = p.getBaseVelocity(physics_body)[0][2]
+
     count = 0
-    while(z_vel < 0 and count < 1000):
+    while(z_vel < 0 and count < 1000 * 50):
       p.stepSimulation(physicsClientId=physicsClient)
       z_vel = p.getBaseVelocity(physics_body)[0][2]
       count += 1
     [final_position, final_orientation] = p.getBasePositionAndOrientation(physics_body)
+    view_mat = np.asarray(view_matrix).reshape([4,4], order='F')
+    final_position = np.matmul(view_mat, np.array([final_position[0], final_position[1], final_position[2], 1]))
     final_velocity = p.getBaseVelocity(physics_body)[0]
+    final_velocity = np.matmul(view_mat, np.array([final_velocity[0], final_velocity[1], final_velocity[2], 0]))
 
     # Make a dict of our labels and data
     out_dict = {
       'frames': frames,
-      'position': np.asarray(final_position),
-      'velocity': np.asarray(final_velocity)
+      'position': final_position[:-1],
+      'velocity': final_velocity[:-1]
     }
 
     scipy.io.savemat(f'{start_time}{os.sep}sample_{sample_index}.npy', out_dict, do_compression=True)
