@@ -154,7 +154,7 @@ if __name__ == '__main__':
     
     # Define loss, optimization technique
     L2_dist = nn.MSELoss(reduction='mean')
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, lr_decay=1e-3)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
     for epoch in range(1000000):
         net_loss = 0
