@@ -1,5 +1,6 @@
 import torch, os, glob
 from torch import nn
+import torch.nn.utils
 import scipy.io
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
@@ -153,7 +154,7 @@ if __name__ == '__main__':
     
     # Define loss, optimization technique
     L2_dist = nn.MSELoss(reduction='mean')
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, lr_decay=1e-3)
 
     for epoch in range(1000000):
         net_loss = 0
@@ -174,6 +175,7 @@ if __name__ == '__main__':
 
             # Backpropagate thru some syntactic magic
             optimizer.zero_grad() # Zero optimizer's gradients
+            nn.utils.clip_grad_value_(model.parameters(), 1.0)
             loss.backward() # Backpropagate loss
             optimizer.step()
             
