@@ -80,6 +80,8 @@ class BounceDataset(Dataset):
         frames = np.reshape(trimmed_frame, [num_frames_to_fuse, 170, 170, 3])
         for c in range(3):
             for j in range(num_frames_to_fuse):
+                frames[j,:,:,c] += np.random.normal(scale=2/255) * 255 / 2 # Adds a bit of noise to the image
+                np.clip(frames[j,:,:,c], 0, 255, out=frames[j,:,:,c])
                 channel_mean = np.mean(frames[j,:,:,c])
                 frames[j,:,:,c] -= channel_mean
         pos_label = sample['position'][0]
