@@ -11,6 +11,9 @@ for i in range(len(sample_paths)):
 
   frames = np.zeros([10, 170 * 170, 3], dtype=np.uint8)
   pos_label = labels[i,1:] / 100 # from cm to meters
+  z = pos_label[2] # We got the axes wrong!
+  pos_label[2] = pos_label[1]
+  pos_label[1] = -z
   for j in range(10):
     print(os.path.join(directory, f'image000{j}.png'))
     img = cv2.imread(os.path.join(directory, f'image000{j}.png'), cv2.IMREAD_COLOR)
