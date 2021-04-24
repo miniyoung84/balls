@@ -12,13 +12,13 @@ import time
 
 gravity = -9.81
 num_frames = 30 #number of frames per simulation
-num_samples = 100000 # number of simulations we want to run
+num_samples = 10000 # number of simulations we want to run
 frame_dimensions = 170
 
 random.seed()
 
-physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-p.setTimeStep(1 / 30 / 50, physicsClientId=physicsClient)
+physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version
+p.setTimeStep(1 / 30 / 10, physicsClientId=physicsClient)
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,gravity)
 planeId = p.loadURDF("plane.urdf")
@@ -101,11 +101,11 @@ for sample_index in range(num_samples):
 
     bounce_frame = int(time_to_hit * 30)
     for i in range(int(bounce_frame - num_frames / 2)):
-      for j in range(50):
+      for j in range(10):
         p.stepSimulation(physicsClientId=physicsClient)
 
     for i in range(num_frames):
-        for j in range(50):
+        for j in range(10):
           p.stepSimulation(physicsClientId=physicsClient)
         
         # get an image
@@ -133,7 +133,7 @@ for sample_index in range(num_samples):
       z_vel = p.getBaseVelocity(physics_body)[0][2]
 
     count = 0
-    while(z_vel < 0 and count < 1000 * 50):
+    while(z_vel < 0 and count < 1000 * 10):
       p.stepSimulation(physicsClientId=physicsClient)
       z_vel = p.getBaseVelocity(physics_body)[0][2]
       count += 1
