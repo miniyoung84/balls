@@ -66,6 +66,7 @@ if __name__ == '__main__':
   # Load test data
   sample_paths = []
   dataset, data_loader = None, None
+  color = None
   if len(sys.argv) < 2 or (sys.argv[1] != 'sim' and sys.argv[1] != 'real'):
     print(f'usage: {sys.argv[0]} <\'real\' or \'sim\'>')
     exit()
@@ -73,18 +74,21 @@ if __name__ == '__main__':
     sample_paths = glob.glob(os.path.join('real_data', '**', '*.mat'), recursive=True)
     dataset = RealDataset(sample_paths)
     data_loader = DataLoader(dataset, batch_size=batch_size)
+    color = 'r'
   else:
     sample_paths = glob.glob(os.path.join('test_data', '**', '*.npy'), recursive=True)
     dataset = BounceDataset(sample_paths)
     data_loader = DataLoader(dataset, batch_size=batch_size)
+    color = 'b'
 
 
   # Metrics
   euclidean_dist = lambda x, y: np.sqrt(np.sum(np.square(x - y)))
   cosine_dist = lambda x, y: 1 - (np.dot(x, y) / (np.sqrt(np.sum(np.square(x))) * np.sqrt(np.sum(np.square(y)))))
+  magnitude_percent_error = lambda x, y: np.abs(np.sqrt(np.sum(np.square(x))) - np.sqrt(np.sum(np.square(y)))) / np.sqrt(np.sum(np.square(y))) * 100
 
   # Find error for each data point
-  err_pos, err_vel = np.zeros([len(dataset), 2]), np.zeros([len(dataset), 2])
+  err_pos, err_vel = np.zeros([len(dataset), 3]), np.zeros([len(dataset), 2])
   for i in range(len(data_loader)):
     print(f'Batch {i+1}/{len(data_loader)}')
     batch = next(iter(data_loader))
@@ -102,6 +106,7 @@ if __name__ == '__main__':
       # Compute error
       err_pos[i+j,0] = euclidean_dist(pred_pos, true_pos)
       err_pos[i+j,1] = cosine_dist(pred_pos, true_pos)
+      err_pos[i+j,2] = magnitude_percent_error(pred_pos, true_pos)
       err_vel[i+j,0] = euclidean_dist(pred_vel, true_vel)
       err_vel[i+j,1] = cosine_dist(pred_vel, true_vel)
 
@@ -111,35 +116,43 @@ if __name__ == '__main__':
 
   # Visualize position error
   fig=plt.figure()
-  fig.add_subplot(1, 2, 1)
+  fig.add_subplot(1, 3, 1)
   ax = plt.gca()
-  plt.hist(err_pos[:,0], bins=20)
+  plt.hist(err_pos[:,0], bins=10, color=color)
   plt.title(f'Mean error in position: {np.mean(err_pos[:,0]) : 0.3f}')
   ax.set_xlabel('Euclidean distance from bounce location')
   ax.set_ylabel('Frequency')
 
-  fig.add_subplot(1, 2, 2)
+  fig.add_subplot(1, 3, 2)
   ax = plt.gca()
-  plt.hist(err_pos[:,1], bins=20)
+  plt.hist(err_pos[:,1], bins=10, color=color)
   plt.title(f'Mean error in position: {np.mean(err_pos[:,1]) : 0.3f}')
   ax.set_xlabel('Cosine distance')
   ax.set_ylabel('Frequency')
 
-  # Visualize velocity error
-  fig=plt.figure()
-  fig.add_subplot(1, 2, 1)
+  fig.add_subplot(1, 3, 3)
   ax = plt.gca()
-  plt.hist(err_vel[:,0], bins=20)
-  plt.title(f'Mean error in velocity: {np.mean(err_vel[:,0]) : 0.3f}')
-  ax.set_xlabel('Euclidean distance from bounce velocity')
+  plt.hist(err_pos[:,2], bins=10, color=color)
+  plt.title(f'Mean percent error in position magnitude: {np.mean(err_pos[:,2]) : 0.3f}')
+  ax.set_xlabel('Percent error')
   ax.set_ylabel('Frequency')
 
-  fig.add_subplot(1, 2, 2)
-  ax = plt.gca()
-  plt.hist(err_vel[:,1], bins=20)
-  plt.title(f'Mean error in velocity: {np.mean(err_vel[:,1]) : 0.3f}')
-  ax.set_xlabel('Cosine distance')
-  ax.set_ylabel('Frequency')
+  if sys.argv[1] == 'sim':
+    # Visualize velocity error
+    fig=plt.figure()
+    fig.add_subplot(1, 2, 1)
+    ax = plt.gca()
+    plt.hist(err_vel[:,0], bins=10, color=color)
+    plt.title(f'Mean error in velocity: {np.mean(err_vel[:,0]) : 0.3f}')
+    ax.set_xlabel('Euclidean distance from bounce velocity')
+    ax.set_ylabel('Frequency')
+
+    fig.add_subplot(1, 2, 2)
+    ax = plt.gca()
+    plt.hist(err_vel[:,1], bins=10, color=color)
+    plt.title(f'Mean error in velocity: {np.mean(err_vel[:,1]) : 0.3f}')
+    ax.set_xlabel('Cosine distance')
+    ax.set_ylabel('Frequency')
 
   plt.show()
 
