@@ -1,7 +1,6 @@
 import pybullet as p
 import glob, os
 import scipy.io
-import time
 import pybullet_data
 import numpy as np
 import math
@@ -43,7 +42,8 @@ for sample_index in range(num_samples):
     basePosition = [0, 0, drop_height]
     baseVelocity = np.random.rand(3) * 2.9 + 0.1
     baseAngular = np.random.rand(3) * 10
-    ellipse= p.createCollisionShape(p.GEOM_MESH, fileName='sphere.obj', meshScale=[random.random() * 0.2 + 0.3, random.random() * 0.3 + 0.2, 0.5])
+    mesh_scale = np.array([random.random() * 0.2 + 0.3, random.random() * 0.3 + 0.2, 0.2 + 0.3 * random.random()])
+    ellipse= p.createCollisionShape(p.GEOM_MESH, fileName='sphere.obj', meshScale=mesh_scale)
     physics_body = p.createMultiBody(mass, ellipse, -1, basePosition, baseOrientation)
     p.resetBaseVelocity(physics_body, baseVelocity, baseVelocity)
     p.changeDynamics(physics_body, -1, mass = mass)
@@ -137,15 +137,17 @@ for sample_index in range(num_samples):
       p.stepSimulation(physicsClientId=physicsClient)
       z_vel = p.getBaseVelocity(physics_body)[0][2]
       count += 1
-    [final_position, final_orientation] = p.getBasePositionAndOrientation(physics_body)
+    
     view_mat = np.asarray(view_matrix).reshape([4,4], order='F')
-    final_position = np.matmul(view_mat, np.array([final_position[0], final_position[1], final_position[2], 1]))
+    [final_position, final_orientation] = p.getBasePositionAndOrientation(physics_body)
+    final_position = np.matmul(view_mat, np.array([final_position[0], final_position[1], 0, 1]))
     final_velocity = p.getBaseVelocity(physics_body)[0]
     final_velocity = np.matmul(view_mat, np.array([final_velocity[0], final_velocity[1], final_velocity[2], 0]))
 
     # Make a dict of our labels and data
     out_dict = {
       'frames': frames,
+      'scale': np.max(mesh_scale),
       'position': final_position[:-1],
       'velocity': final_velocity[:-1]
     }
