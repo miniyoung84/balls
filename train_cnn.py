@@ -51,12 +51,10 @@ class EFBNet(nn.Module):
         x = self.conv4(x)
         x = self.conv5(x)
         x = self.max_pool(x)
-        x = nn.Flatten(x)
+        x = torch.flatten(x, start_dim=1)
 
         # Add in scale factor before FC layers
-        x = torch.cat([x, torch.zeros([x.size()[0], 1])], 1)
-        print(x.size())
-        x[:,-1] = scales
+        x = torch.cat([x, scales], 1)
 
         x = self.fc1(x)
         pred = self.fc2(x)
@@ -115,10 +113,11 @@ class BounceDataset(Dataset):
 if __name__ == '__main__':
     model_save_path = 'most_recent_model.pt'
     loss_save_path = 'epoch_loss.csv'
+    batch_loss_path = 'batch_loss.csv'
 
     # Use GPU if available
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # device = 'cpu'
+    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cpu'
     print('Using {} device'.format(device))
 
     batch_size = 64
@@ -139,7 +138,7 @@ if __name__ == '__main__':
     
     # Define loss, optimization technique
     L2_dist = nn.MSELoss(reduction='mean')
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-5)
 
     for epoch in range(1000000):
         net_loss = 0
@@ -164,6 +163,11 @@ if __name__ == '__main__':
             nn.utils.clip_grad_value_(model.parameters(), 1.0)
             loss.backward() # Backpropagate loss
             optimizer.step()
+
+            # Save batch loss
+            batch_loss_file = open(batch_loss_path, 'a')
+            batch_loss_file.write(f'{loss}\n')
+            batch_loss_file.close()
             
             if (i + 1) % 100 == 0:
                 torch.save(model, model_save_path)
