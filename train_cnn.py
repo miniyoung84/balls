@@ -116,8 +116,8 @@ if __name__ == '__main__':
     batch_loss_path = 'batch_loss.csv'
 
     # Use GPU if available
-    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    device = 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # device = 'cpu'
     print('Using {} device'.format(device))
 
     batch_size = 64
