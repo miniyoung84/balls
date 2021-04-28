@@ -37,6 +37,7 @@ class RealDataset(Dataset):
                 frames[j,:,:,c] -= channel_mean
         pos_label = sample['position'][0]
         vel_label = sample['velocity'][0]
+        scale = sample['scale'][0]
         label = np.zeros(6)
         label[:3] = pos_label[:]
         label[3:6] = vel_label[:]
@@ -44,7 +45,7 @@ class RealDataset(Dataset):
         # Rearrange axes of frames to match dataset
         data_object = torch.from_numpy(np.transpose(frames, axes=[3, 0, 1, 2]))
 
-        full_sample = {'tensor': data_object, 'label': torch.from_numpy(label)}
+        full_sample = {'tensor': data_object, 'scale': scale, 'label': torch.from_numpy(label)}
 
         if self.transform:
             full_sample = self.transform(full_sample)
@@ -93,9 +94,10 @@ if __name__ == '__main__':
     print(f'Batch {i+1}/{len(data_loader)}')
     batch = next(iter(data_loader))
     sample, label = batch['tensor'].float(), batch['label'].numpy()
+    scale = batch['scale'].float()
 
     # Predict
-    prediction = model(sample).detach().numpy()
+    prediction = model(sample, scale).detach().numpy()
 
     for j in range(prediction.shape[0]):
       pred_pos = prediction[j, :3]

@@ -10,7 +10,8 @@ for i in range(len(sample_paths)):
   labels = np.loadtxt('real_data_labels.csv', delimiter=',', skiprows=1)
 
   frames = np.zeros([10, 170 * 170, 3], dtype=np.uint8)
-  pos_label = labels[i,1:] / 100 # from cm to meters
+  pos_label = labels[i,1:4] / 100 # from cm to meters
+  scale_label = labels[i,4] / 100
   z = pos_label[2] # We got the axes wrong!
   pos_label[2] = pos_label[1]
   pos_label[1] = -z
@@ -31,6 +32,7 @@ for i in range(len(sample_paths)):
     
   out_dict = {
       'frames': frames,
+      'scale': scale_label,
       'position': pos_label,
       'velocity': np.asarray([1, 0, 0])
   }
