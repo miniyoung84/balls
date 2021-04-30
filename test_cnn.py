@@ -116,26 +116,31 @@ if __name__ == '__main__':
   err_pos[np.isnan(err_pos)] = -1
   err_vel[np.isnan(err_vel)] = -1
 
+  # Print some stats
+  print(f'Proportion of samples with L2 distance < 1: {len(err_pos[err_pos[:,0] < 1, 0]) / len(err_pos)}')
+  print(f'Proportion of samples with cosine distance < 0.1: {len(err_pos[err_pos[:,1] < 0.1, 1]) / len(err_pos)}')
+  print(f'Proportion of samples with mag percent error < 10: {len(err_pos[err_pos[:,2] < 10, 2]) / len(err_pos)}')
+
   # Visualize position error
   fig=plt.figure()
   fig.add_subplot(1, 3, 1)
   ax = plt.gca()
   plt.hist(err_pos[:,0], bins=10, color=color)
-  plt.title(f'Mean error in position: {np.mean(err_pos[:,0]) : 0.3f}')
+  plt.title(f'Median error in position: {np.median(err_pos[:,0]) : 0.3f}')
   ax.set_xlabel('Euclidean distance from bounce location')
   ax.set_ylabel('Frequency')
 
   fig.add_subplot(1, 3, 2)
   ax = plt.gca()
   plt.hist(err_pos[:,1], bins=10, color=color)
-  plt.title(f'Mean error in position: {np.mean(err_pos[:,1]) : 0.3f}')
+  plt.title(f'Median error in position: {np.median(err_pos[:,1]) : 0.3f}')
   ax.set_xlabel('Cosine distance')
   ax.set_ylabel('Frequency')
 
   fig.add_subplot(1, 3, 3)
   ax = plt.gca()
   plt.hist(err_pos[:,2], bins=10, color=color)
-  plt.title(f'Mean percent error in position magnitude: {np.mean(err_pos[:,2]) : 0.3f}')
+  plt.title(f'Median percent error in position magnitude: {np.median(err_pos[:,2]) : 0.3f}')
   ax.set_xlabel('Percent error')
   ax.set_ylabel('Frequency')
 
@@ -145,14 +150,14 @@ if __name__ == '__main__':
     fig.add_subplot(1, 2, 1)
     ax = plt.gca()
     plt.hist(err_vel[:,0], bins=10, color=color)
-    plt.title(f'Mean error in velocity: {np.mean(err_vel[:,0]) : 0.3f}')
+    plt.title(f'Median error in velocity: {np.median(err_vel[:,0]) : 0.3f}')
     ax.set_xlabel('Euclidean distance from bounce velocity')
     ax.set_ylabel('Frequency')
 
     fig.add_subplot(1, 2, 2)
     ax = plt.gca()
     plt.hist(err_vel[:,1], bins=10, color=color)
-    plt.title(f'Mean error in velocity: {np.mean(err_vel[:,1]) : 0.3f}')
+    plt.title(f'Median error in velocity: {np.median(err_vel[:,1]) : 0.3f}')
     ax.set_xlabel('Cosine distance')
     ax.set_ylabel('Frequency')
 
